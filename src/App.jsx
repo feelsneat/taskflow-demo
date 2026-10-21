@@ -1,15 +1,18 @@
 import { useEffect, useState } from 'react'
 import './App.css'
 
+// Keep the storage key in one place so reads and writes use the same name.
 const STORAGE_KEY = 'taskflow-tasks'
 const filters = ['All', 'Active', 'Completed']
 
+// Load the previous task list when the app starts.
 function readSavedTasks() {
   const savedTasks = localStorage.getItem(STORAGE_KEY)
   if (!savedTasks) return []
 
   try {
     const tasks = JSON.parse(savedTasks)
+    // Ignore saved entries that do not have the fields this app expects.
     return Array.isArray(tasks)
       ? tasks.filter(
           (task) =>
@@ -25,15 +28,18 @@ function readSavedTasks() {
 }
 
 function App() {
+  // State is the app's current data; changing it tells React to update the page.
   const [tasks, setTasks] = useState(readSavedTasks)
   const [taskText, setTaskText] = useState('')
   const [activeFilter, setActiveFilter] = useState('All')
   const [inputError, setInputError] = useState('')
 
+  // Save the list whenever it changes so tasks remain after a page refresh.
   useEffect(() => {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(tasks))
   }, [tasks])
 
+  // Calculate counts and the filtered list from tasks instead of storing duplicate data.
   const completedCount = tasks.filter((task) => task.completed).length
   const activeCount = tasks.length - completedCount
   const visibleTasks = tasks.filter((task) => {
@@ -42,6 +48,7 @@ function App() {
     return true
   })
 
+  // The form submit handler is used by both the button and the Enter key.
   function addTask(event) {
     event.preventDefault()
     const text = taskText.trim()
@@ -55,10 +62,12 @@ function App() {
       { id: crypto.randomUUID(), text, completed: false },
       ...currentTasks,
     ])
+    // Clear the form and any old validation message after a successful add.
     setTaskText('')
     setInputError('')
   }
 
+  // Return a new task array with only the selected task's completion changed.
   function toggleTask(taskId) {
     setTasks((currentTasks) =>
       currentTasks.map((task) =>
@@ -67,6 +76,7 @@ function App() {
     )
   }
 
+  // Keep every task except the one the user chose to delete.
   function deleteTask(taskId) {
     setTasks((currentTasks) =>
       currentTasks.filter((task) => task.id !== taskId),
@@ -75,6 +85,7 @@ function App() {
 
   return (
     <main className="app-shell">
+      {/* The header contains the app identity and short tagline. */}
       <header className="topbar">
         <a className="brand" href="/" aria-label="TaskFlow home">
           <span className="brand-mark" aria-hidden="true">
@@ -100,6 +111,7 @@ function App() {
       </header>
 
       <section className="workspace">
+        {/* Introductory heading gives the task list context. */}
         <div className="page-heading">
           <div>
             <p className="eyebrow">YOUR PERSONAL WORKSPACE</p>
@@ -114,6 +126,7 @@ function App() {
           </div>
         </div>
 
+        {/* These totals update automatically because they are calculated from tasks. */}
         <section className="stats-grid" aria-label="Task statistics">
           <article className="stat-card">
             <span className="stat-icon total-icon" aria-hidden="true">
@@ -177,6 +190,7 @@ function App() {
           </article>
         </section>
 
+        {/* Main task area: form, filters, task rows, and helpful empty states. */}
         <section className="task-panel" aria-labelledby="tasks-heading">
           <div className="panel-heading">
             <div>
@@ -190,6 +204,7 @@ function App() {
             </span>
           </div>
 
+          {/* Submitting the form adds a task; Enter submits it as well. */}
           <form className="task-form" onSubmit={addTask} noValidate>
             <label className="visually-hidden" htmlFor="new-task">
               Add a task
@@ -221,6 +236,7 @@ function App() {
             </p>
           )}
 
+          {/* Selecting a filter changes which tasks are shown, not the saved tasks. */}
           <div className="list-toolbar">
             <div className="filter-tabs" role="group" aria-label="Filter tasks">
               {filters.map((filter) => (
@@ -247,6 +263,7 @@ function App() {
             </span>
           </div>
 
+          {/* Render a row for each matching task, or explain why the list is empty. */}
           <div className="task-list" aria-live="polite">
             {visibleTasks.length > 0 ? (
               visibleTasks.map((task) => (
@@ -322,6 +339,7 @@ function App() {
             )}
           </div>
 
+          {/* Summarize the current view and remind users that tasks are saved locally. */}
           <footer className="panel-footer">
             <span>
               Showing {visibleTasks.length} of {tasks.length}{' '}
